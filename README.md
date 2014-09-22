@@ -8,7 +8,7 @@ This node will allow the enduser to use beautifull compact (sandboxed) coffeescr
 
 Run: 
 
-    npm install node-red-node-coffeescript
+    npm install node-red-contrib-coffeescript
 
 # Extra notes
 
