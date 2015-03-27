@@ -33,6 +33,28 @@ module.exports = function(RED) {
     var fs = require('fs');
     var fspath = require('path');
     var coffee = require('coffee-script');
+    
+    var handleResults = function (ctx, msg, results) {
+        if (results == null) {
+            results = [];
+        } else if (results.length == null) {
+            results = [results];
+        }
+        if (msg._topic) {
+            for (var m in results) {
+                if (results[m]) {
+                    if (util.isArray(results[m])) {
+                        for (var n in results[m]) {
+                            results[m][n]._topic = msg._topic;
+                        }
+                    } else {
+                        results[m]._topic = msg._topic;
+                    }
+                }
+            }
+        }
+        ctx.send(results);
+    };
 
     function CoffeeNode(n) {
         RED.nodes.createNode(this,n);
@@ -44,6 +66,10 @@ module.exports = function(RED) {
             this.on("input", function(msg) {
                 if (msg != null) {
                     var cs = "f";
+                    var ctx = this;
+                    var cb = function (result) {
+                        handleResults(ctx, msg, result)
+                    };
                     try {
                         var results = eval( coffee.compile( this.func, {sandbox:true} ) );
                         if (results == null) {
@@ -51,21 +77,7 @@ module.exports = function(RED) {
                         } else if (results.length == null) {
                             results = [results];
                         }
-                        if (msg._topic) {
-                            for (var m in results) {
-                                if (results[m]) {
-                                    if (util.isArray(results[m])) {
-                                        for (var n in results[m]) {
-                                            results[m][n]._topic = msg._topic;
-                                        }
-                                    } else {
-                                        results[m]._topic = msg._topic;
-                                    }
-                                }
-                            }
-                        }
-                        this.send(results);
-
+                        handleResults(this, msg, results);
                     } catch(err) {
                         this.error(err.toString());
                     }
